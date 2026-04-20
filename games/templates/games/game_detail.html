@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}{{ game.name }} — ScoreKeeper{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+
+    <div class="mb-6">
+        <a href="{% url 'games:list' %}" class="text-sm text-indigo-600 hover:text-indigo-800">
+            ← Back to Games
+        </a>
+    </div>
+
+    <!-- Game Header -->
+    <div class="bg-white shadow-sm rounded-xl border border-gray-200 p-6 mb-6">
+        <div class="flex items-start justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-800">{{ game.name }}</h1>
+                {% if game.description %}
+                <p class="text-gray-500 mt-1 text-sm">{{ game.description }}</p>
+                {% endif %}
+            </div>
+            <div class="flex space-x-2">
+                <a href="{% url 'scoring:create' %}?game={{ game.pk }}"
+                   class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors duration-150">
+                    ▶ Play
+                </a>
+                <a href="{% url 'games:update' game.pk %}"
+                   class="bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 text-sm font-medium px-4 py-2 rounded-lg transition-colors duration-150">
+                    Edit
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Rules -->
+    <div class="bg-white shadow-sm rounded-xl border border-gray-200 p-6 mb-6">
+        <h2 class="text-base font-semibold text-gray-700 mb-4">Rules</h2>
+        <dl class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <div class="bg-gray-50 rounded-lg p-3">
+                <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Play Mode</dt>
+                <dd>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+                        {% if game.play_mode == 'team' %}bg-blue-100 text-blue-700
+                        {% else %}bg-green-100 text-green-700{% endif %}">
+                        {{ game.get_play_mode_display }}
+                    </span>
+                </dd>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-3">
+                <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Scoring</dt>
+                <dd class="text-sm font-medium text-gray-800">{{ game.get_scoring_mode_display }}</dd>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-3">
+                <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Winning Score</dt>
+                <dd class="text-sm font-medium text-gray-800">{{ game.winning_score|default:"No limit" }}</dd>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-3">
+                <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Rounds</dt>
+                <dd class="text-sm font-medium text-gray-800">{{ game.num_rounds|default:"Open-ended" }}</dd>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-3">
+                <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Negative Scores</dt>
+                <dd class="text-sm font-medium text-gray-800">{{ game.allow_negative|yesno:"Allowed,Not allowed" }}</dd>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-3">
+                <dt class="text-xs text-gray-400 uppercase tracking-wide mb-1">Total Sessions</dt>
+                <dd class="text-sm font-medium text-gray-800">{{ game.sessions.count }}</dd>
+            </div>
+        </dl>
+    </div>
+
+    <!-- Recent Sessions -->
+    <div class="bg-white shadow-sm rounded-xl border border-gray-200 p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-base font-semibold text-gray-700">Recent Sessions</h2>
+            <a href="{% url 'scoring:create' %}?game={{ game.pk }}"
+               class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+                + New Session
+            </a>
+        </div>
+
+        {% if recent_sessions %}
+        <ul class="divide-y divide-gray-100">
+            {% for session in recent_sessions %}
+            <li class="py-3 flex items-center justify-between">
+                <div>
+                    <a href="{% url 'scoring:detail' session.pk %}"
+                       class="text-gray-800 font-medium hover:text-indigo-600 text-sm">
+                        Session #{{ session.pk }}
+                    </a>
+                    <p class="text-xs text-gray-400">
+                        {{ session.started_at|date:"M j, Y g:i A" }} &mdash;
+                        {{ session.participants.count }} participant{{ session.participants.count|pluralize }}
+                    </p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    {% if session.is_complete %}
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-500">
+                        Complete
+                    </span>
+                    {% else %}
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">
+                        In Progress
+                    </span>
+                    {% endif %}
+                    {% if session.winner %}
+                    <span class="text-sm font-medium text-indigo-600">🏆 {{ session.winner }}</span>
+                    {% endif %}
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-gray-400 text-sm">No sessions played yet.</p>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

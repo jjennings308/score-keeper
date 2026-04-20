@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}{{ session.game.name }} — ScoreKeeper{% endblock %}
+
+{% block content %}
+
+<!-- Session Header -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+    <div>
+        <a href="{% url 'scoring:list' %}" class="text-sm text-indigo-600 hover:text-indigo-800">
+            ← Sessions
+        </a>
+        <h1 class="text-2xl font-bold text-gray-800 mt-1">{{ session.game.name }}</h1>
+        <p class="text-sm text-gray-400">
+            Started {{ session.started_at|date:"M j, Y g:i A" }}
+            · {{ session.participants.count }} players
+            {% if session.game.num_rounds %}· {{ session.rounds.count }}/{{ session.game.num_rounds }} rounds{% endif %}
+        </p>
+    </div>
+
+    <div class="flex items-center gap-3">
+        {% if not session.is_complete %}
+            <!-- End Session -->
+            <form method="post" action="{% url 'scoring:complete' session.pk %}">
+                {% csrf_token %}
+                <button type="submit"
+                        onclick="return confirm('End this session and declare a winner?')"
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors duration-150">
+                    End Session
+                </button>
+            </form>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Winner Banner -->
+{% if session.is_complete and session.winner %}
+<div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6 text-center">
+    <p class="text-2xl mb-1">🏆</p>
+    <p class="text-lg font-bold text-yellow-800">{{ session.winner }} wins!</p>
+</div>
+{% endif %}
+
+<!-- Game Rules Summary -->
+<div class="flex flex-wrap gap-2 mb-4">
+    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-600">
+        {{ session.game.get_scoring_mode_display }}
+    </span>
+    {% if session.game.winning_score %}
+    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-600">
+        Win at {{ session.game.winning_score }} pts
+    </span>
+    {% endif %}
+    {% if session.game.allow_negative %}
+    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-600">
+        Negatives allowed
+    </span>
+    {% endif %}
+</div>
+
+<!-- Score Table -->
+<div class="bg-white shadow-sm rounded-xl border border-gray-200 overflow-x-auto">
+    <div id="score-table-container">
+        {% include "scoring/partials/score_table.html" %}
+    </div>
+</div>
+
+{% endblock %}

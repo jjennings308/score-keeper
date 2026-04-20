@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}{{ player.name }} — ScoreKeeper{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+
+    <div class="mb-6">
+        <a href="{% url 'players:list' %}" class="text-sm text-indigo-600 hover:text-indigo-800">
+            ← Back to Players
+        </a>
+    </div>
+
+    <div class="bg-white shadow-sm rounded-xl border border-gray-200 p-6 mb-6">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <div class="h-14 w-14 rounded-full bg-indigo-100 flex items-center justify-center text-2xl font-bold text-indigo-600">
+                    {{ player.name|first|upper }}
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800">{{ player.name }}</h1>
+                    <p class="text-sm text-gray-400">Added {{ player.created_at|date:"M j, Y" }}</p>
+                </div>
+            </div>
+            <a href="{% url 'players:update' player.pk %}"
+               class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors duration-150">
+                Edit
+            </a>
+        </div>
+    </div>
+
+    <!-- Teams -->
+    <div class="bg-white shadow-sm rounded-xl border border-gray-200 p-6 mb-6">
+        <h2 class="text-base font-semibold text-gray-700 mb-4">Teams</h2>
+        {% if player.teams.all %}
+        <div class="flex flex-wrap gap-2">
+            {% for team in player.teams.all %}
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-indigo-100 text-indigo-700">
+                {{ team.name }}
+            </span>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-gray-400 text-sm">Not a member of any teams yet.</p>
+        {% endif %}
+    </div>
+
+    <!-- Recent Sessions -->
+    <div class="bg-white shadow-sm rounded-xl border border-gray-200 p-6">
+        <h2 class="text-base font-semibold text-gray-700 mb-4">Recent Sessions</h2>
+        {% with sessions=player.session_entries.all %}
+        {% if sessions %}
+        <ul class="divide-y divide-gray-100">
+            {% for entry in sessions %}
+            <li class="py-3 flex items-center justify-between">
+                <div>
+                    <a href="{% url 'scoring:detail' entry.session.pk %}"
+                       class="text-gray-800 font-medium hover:text-indigo-600 text-sm">
+                        {{ entry.session.game.name }}
+                    </a>
+                    <p class="text-xs text-gray-400">{{ entry.session.started_at|date:"M j, Y" }}</p>
+                </div>
+                <span class="text-sm font-semibold text-gray-700">
+                    {{ entry.running_total }} pts
+                </span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-gray-400 text-sm">No sessions played yet.</p>
+        {% endif %}
+        {% endwith %}
+    </div>
+
+</div>
+{% endblock %}

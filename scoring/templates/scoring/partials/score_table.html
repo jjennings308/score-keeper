@@ -1,0 +1,66 @@
+{% load dict_extras %}
+<table class="min-w-full divide-y divide-gray-200">
+    <thead class="bg-gray-50">
+        <tr>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-16">
+                Round
+            </th>
+            {% for sp in participants %}
+            <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                {{ sp.display_name }}
+            </th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody class="bg-white divide-y divide-gray-100">
+        {% for round in rounds %}
+        <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2 text-sm text-gray-400 font-medium">
+                {{ round.round_number }}
+            </td>
+            {% for sp in participants %}
+            <td class="px-4 py-2 text-center">
+                {% with score=score_grid|get_item:round|get_item:sp.id %}
+                <form hx-post="{% url 'scoring:save_score' session.pk %}"
+                      hx-trigger="change"
+                      hx-target="#score-table-container"
+                      hx-swap="innerHTML">
+                    {% csrf_token %}
+                    <input type="hidden" name="round_id" value="{{ round.pk }}">
+                    <input type="hidden" name="session_player_id" value="{{ sp.pk }}">
+                    <input type="number"
+                           name="points"
+                           value="{{ score.points|default:'' }}"
+                           placeholder="—"
+                           {% if session.is_complete %}disabled{% endif %}
+                           class="w-20 text-center rounded-lg border border-gray-200 px-2 py-1.5 text-sm text-gray-800
+                                  focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 focus:outline-none
+                                  {% if session.is_complete %}bg-gray-50 text-gray-400 cursor-not-allowed{% endif %}">
+                </form>
+                {% endwith %}
+            </td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </tbody>
+    <tfoot>
+        {% include "scoring/partials/totals_row.html" %}
+    </tfoot>
+</table>
+
+{% if not session.is_complete %}
+<div class="px-4 py-3 border-t border-gray-100">
+    {% if not at_round_limit %}
+        {% if not session.game.num_rounds or last_round_has_scores %}
+        <button hx-post="{% url 'scoring:add_round' session.pk %}"
+                hx-target="#score-table-container"
+                hx-swap="innerHTML"
+                class="bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 text-sm font-medium px-4 py-2 rounded-lg transition-colors duration-150">
+            + Add Round
+        </button>
+        {% endif %}
+    {% else %}
+    <p class="text-xs text-gray-400">All {{ session.game.num_rounds }} rounds complete.</p>
+    {% endif %}
+</div>
+{% endif %}

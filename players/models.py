@@ -11,6 +11,7 @@ class Player(models.Model):
         help_text="Optional link to a Django auth user account"
     )
     name = models.CharField(max_length=100)
+    nickname = models.CharField(max_length=50, blank=True, help_text="Optional alias or nickname")
     avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -19,6 +20,10 @@ class Player(models.Model):
 
     class Meta:
         ordering = ['name']
+        
+    @property
+    def display_name(self):
+        return self.nickname if self.nickname else self.name
 
 
 class Team(models.Model):

@@ -96,7 +96,7 @@ class SessionPlayer(models.Model):
     @property
     def display_name(self):
         if self.player:
-            return self.player.name
+            return self.player.nickname if self.player.nickname else self.player.name
         if self.team:
             return self.team.name
         return "Unknown"

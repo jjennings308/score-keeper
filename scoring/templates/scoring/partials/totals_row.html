@@ -1,0 +1,17 @@
+{% load dict_extras %}
+
+<tr id="totals-row" class="bg-gray-50 border-t-2 border-gray-200 font-semibold">
+    <td class="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">
+        Total
+    </td>
+    {% for sp in participants %}
+        <td class="px-4 py-3 text-center text-sm font-bold
+            {% if best_score is not None and totals|get_item:sp.id == best_score %}
+                text-green-600
+            {% else %}
+                text-gray-800
+            {% endif %}">
+            {{ totals|get_item:sp.id|default:"0" }}
+        </td>
+    {% endfor %}
+</tr>

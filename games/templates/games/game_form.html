@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} — ScoreKeeper{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+
+    <div class="mb-6">
+        <a href="{% url 'games:list' %}" class="text-sm text-indigo-600 hover:text-indigo-800">
+            ← Back to Games
+        </a>
+        <h1 class="text-2xl font-bold text-gray-800 mt-2">{{ title }}</h1>
+    </div>
+
+    <div class="bg-white shadow-sm rounded-xl border border-gray-200 p-6">
+        <form method="post">
+            {% csrf_token %}
+
+            <!-- Name -->
+            <div class="mb-5">
+                <label for="{{ form.name.id_for_label }}"
+                       class="block text-sm font-medium text-gray-700 mb-1">
+                    Game Name <span class="text-red-500">*</span>
+                </label>
+                <input type="text"
+                       name="{{ form.name.html_name }}"
+                       id="{{ form.name.id_for_label }}"
+                       value="{{ form.name.value|default:'' }}"
+                       class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-sm
+                              {% if form.name.errors %}border-red-400{% endif %}">
+                {% for error in form.name.errors %}
+                <p class="mt-1 text-xs text-red-500">{{ error }}</p>
+                {% endfor %}
+            </div>
+
+            <!-- Description -->
+            <div class="mb-5">
+                <label for="{{ form.description.id_for_label }}"
+                       class="block text-sm font-medium text-gray-700 mb-1">
+                    Description
+                </label>
+                <textarea name="{{ form.description.html_name }}"
+                          id="{{ form.description.id_for_label }}"
+                          rows="3"
+                          class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-sm">{{ form.description.value|default:'' }}</textarea>
+            </div>
+
+            <!-- Play Mode & Scoring Mode side by side -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
+
+                <div>
+                    <label for="{{ form.play_mode.id_for_label }}"
+                           class="block text-sm font-medium text-gray-700 mb-1">
+                        Play Mode <span class="text-red-500">*</span>
+                    </label>
+                    <select name="{{ form.play_mode.html_name }}"
+                            id="{{ form.play_mode.id_for_label }}"
+                            class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-sm">
+                        {% for value, label in form.play_mode.field.choices %}
+                        <option value="{{ value }}" {% if value == form.play_mode.value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% for error in form.play_mode.errors %}
+                    <p class="mt-1 text-xs text-red-500">{{ error }}</p>
+                    {% endfor %}
+                </div>
+
+                <div>
+                    <label for="{{ form.scoring_mode.id_for_label }}"
+                           class="block text-sm font-medium text-gray-700 mb-1">
+                        Scoring Mode <span class="text-red-500">*</span>
+                    </label>
+                    <select name="{{ form.scoring_mode.html_name }}"
+                            id="{{ form.scoring_mode.id_for_label }}"
+                            class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-sm">
+                        {% for value, label in form.scoring_mode.field.choices %}
+                        <option value="{{ value }}" {% if value == form.scoring_mode.value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% for error in form.scoring_mode.errors %}
+                    <p class="mt-1 text-xs text-red-500">{{ error }}</p>
+                    {% endfor %}
+                </div>
+
+            </div>
+
+            <!-- Winning Score & Num Rounds side by side -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
+
+                <div>
+                    <label for="{{ form.winning_score.id_for_label }}"
+                           class="block text-sm font-medium text-gray-700 mb-1">
+                        Winning Score
+                    </label>
+                    <input type="number"
+                           name="{{ form.winning_score.html_name }}"
+                           id="{{ form.winning_score.id_for_label }}"
+                           value="{{ form.winning_score.value|default:'' }}"
+                           class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-sm">
+                    <p class="mt-1 text-xs text-gray-400">Leave blank for no score limit.</p>
+                    {% for error in form.winning_score.errors %}
+                    <p class="mt-1 text-xs text-red-500">{{ error }}</p>
+                    {% endfor %}
+                </div>
+
+                <div>
+                    <label for="{{ form.num_rounds.id_for_label }}"
+                           class="block text-sm font-medium text-gray-700 mb-1">
+                        Number of Rounds
+                    </label>
+                    <input type="number"
+                           name="{{ form.num_rounds.html_name }}"
+                           id="{{ form.num_rounds.id_for_label }}"
+                           value="{{ form.num_rounds.value|default:'' }}"
+                           class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-sm">
+                    <p class="mt-1 text-xs text-gray-400">Leave blank for open-ended play.</p>
+                    {% for error in form.num_rounds.errors %}
+                    <p class="mt-1 text-xs text-red-500">{{ error }}</p>
+                    {% endfor %}
+                </div>
+
+            </div>
+
+            <!-- Allow Negative -->
+            <div class="mb-6">
+                <div class="flex items-center space-x-3">
+                    <input type="checkbox"
+                           name="{{ form.allow_negative.html_name }}"
+                           id="{{ form.allow_negative.id_for_label }}"
+                           {% if form.allow_negative.value %}checked{% endif %}
+                           class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                    <label for="{{ form.allow_negative.id_for_label }}"
+                           class="text-sm font-medium text-gray-700">
+                        Allow negative scores
+                    </label>
+                </div>
+                <p class="mt-1 text-xs text-gray-400 ml-7">Enable for games with penalty points.</p>
+            </div>
+
+            <div class="flex items-center justify-between pt-2 border-t border-gray-100">
+                <a href="{% url 'games:list' %}"
+                   class="text-sm text-gray-500 hover:text-gray-700">
+                    Cancel
+                </a>
+                <button type="submit"
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-6 py-2 rounded-lg transition-colors duration-150">
+                    {{ button_label }}
+                </button>
+            </div>
+
+        </form>
+    </div>
+
+</div>
+{% endblock %}

@@ -5,9 +5,9 @@ from .models import Player, Team
 
 @admin.register(Player)
 class PlayerAdmin(admin.ModelAdmin):
-    list_display = ['name', 'user', 'created_at']
+    list_display = ['name', 'nickname', 'user', 'created_at']
     list_filter = ['created_at']
-    search_fields = ['name', 'user__username', 'user__email']
+    search_fields = ['name', 'nickname', 'user__username', 'user__email']
     readonly_fields = ['created_at']
     raw_id_fields = ['user']
 
