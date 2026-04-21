@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.urls import reverse
 
 
 class Game(models.Model):
@@ -13,6 +14,10 @@ class Game(models.Model):
         TARGET = 'target', 'Target Score (first to reach wins)'
         LOWEST = 'lowest_wins', 'Lowest Score Wins'
 
+    class TeamScoring(models.TextChoices):
+        TEAM = 'team', 'One score per team per round'
+        INDIVIDUAL = 'individual', 'Each player scores, team totals sum'
+
     name = models.CharField(max_length=150)
     description = models.TextField(blank=True)
     play_mode = models.CharField(
@@ -24,6 +29,12 @@ class Game(models.Model):
         max_length=20,
         choices=ScoringMode.choices,
         default=ScoringMode.CUMULATIVE
+    )
+    team_scoring = models.CharField(
+        max_length=20,
+        choices=TeamScoring.choices,
+        default=TeamScoring.TEAM,
+        help_text="Only applies when Play Mode is Team"
     )
     winning_score = models.IntegerField(
         null=True,
@@ -51,6 +62,9 @@ class Game(models.Model):
 
     def __str__(self):
         return self.name
+
+    def get_absolute_url(self):
+        return reverse('games:detail', kwargs={'pk': self.pk})
 
     class Meta:
         ordering = ['name']

@@ -28,7 +28,7 @@ class GameCreateView(LoginRequiredMixin, CreateView):
     model = Game
     template_name = 'games/game_form.html'
     fields = [
-        'name', 'description', 'play_mode', 'scoring_mode',
+        'name', 'description', 'play_mode', 'scoring_mode', 'team_scoring',
         'winning_score', 'num_rounds', 'allow_negative'
     ]
     success_url = reverse_lazy('games:list')
@@ -49,7 +49,7 @@ class GameUpdateView(LoginRequiredMixin, UpdateView):
     model = Game
     template_name = 'games/game_form.html'
     fields = [
-        'name', 'description', 'play_mode', 'scoring_mode',
+        'name', 'description', 'play_mode', 'scoring_mode', 'team_scoring',
         'winning_score', 'num_rounds', 'allow_negative'
     ]
     success_url = reverse_lazy('games:list')

@@ -18,8 +18,11 @@
             {% csrf_token %}
 
             {% if games %}
-            <div class="space-y-3 mb-6">
-                {% for game in games %}
+
+            {% if individual_games %}
+            <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Individual Games</h2>
+            <div class="space-y-3 mb-5">
+                {% for game in individual_games %}
                 <label class="flex items-start p-4 rounded-lg border-2 cursor-pointer transition-colors duration-150
                               {% if selected_game_id == game.pk %}border-indigo-500 bg-indigo-50{% else %}border-gray-200 hover:border-indigo-300{% endif %}">
                     <input type="radio"
@@ -34,13 +37,35 @@
                             {% if game.winning_score %} · Win at {{ game.winning_score }} pts{% endif %}
                             {% if game.num_rounds %} · {{ game.num_rounds }} rounds{% endif %}
                         </span>
-                        {% if game.description %}
-                        <span class="block text-xs text-gray-400 mt-0.5">{{ game.description }}</span>
-                        {% endif %}
                     </div>
                 </label>
                 {% endfor %}
             </div>
+            {% endif %}
+
+            {% if team_games %}
+            <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Team Games</h2>
+            <div class="space-y-3 mb-5">
+                {% for game in team_games %}
+                <label class="flex items-start p-4 rounded-lg border-2 cursor-pointer transition-colors duration-150
+                              {% if selected_game_id == game.pk %}border-indigo-500 bg-indigo-50{% else %}border-gray-200 hover:border-indigo-300{% endif %}">
+                    <input type="radio"
+                           name="game"
+                           value="{{ game.pk }}"
+                           {% if selected_game_id == game.pk %}checked{% endif %}
+                           class="mt-0.5 h-4 w-4 text-indigo-600 border-gray-300 focus:ring-indigo-500">
+                    <div class="ml-3">
+                        <span class="block text-sm font-semibold text-gray-800">{{ game.name }}</span>
+                        <span class="block text-xs text-gray-400 mt-0.5">
+                            Team · {{ game.get_scoring_mode_display }}
+                            {% if game.winning_score %} · Win at {{ game.winning_score }} pts{% endif %}
+                            {% if game.num_rounds %} · {{ game.num_rounds }} rounds{% endif %}
+                        </span>
+                    </div>
+                </label>
+                {% endfor %}
+            </div>
+            {% endif %}
 
             <div class="flex items-center justify-between pt-2 border-t border-gray-100">
                 <a href="{% url 'games:create' %}"

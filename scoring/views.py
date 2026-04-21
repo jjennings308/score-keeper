@@ -1,15 +1,59 @@
-from django.views.generic import ListView, DetailView, CreateView, View
+from django.views.generic import ListView, DetailView, View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404, redirect, render
 from django.http import HttpResponse
-from django.urls import reverse
 from django.contrib import messages
 from django.utils import timezone
 from django.db.models import Sum
 
 from games.models import Game
-from players.models import Player
+from players.models import Player, Team
 from .models import Session, SessionPlayer, Round, Score
+
+
+def build_score_context(session):
+    """Shared helper to build all score sheet context data."""
+    participants = session.participants.select_related('player', 'team').order_by('display_order')
+    rounds = session.rounds.prefetch_related('scores').order_by('round_number')
+
+    score_grid = {}
+    for r in rounds:
+        score_grid[r] = {}
+        for score in r.scores.all():
+            score_grid[r][score.session_player_id] = score
+
+    totals = {}
+    for sp in participants:
+        totals[sp.id] = sp.scores.aggregate(total=Sum('points'))['total'] or 0
+
+    if totals:
+        if session.game.scoring_mode == Game.ScoringMode.LOWEST:
+            best_score = min(totals.values())
+        else:
+            best_score = max(totals.values())
+    else:
+        best_score = None
+
+    last_round_has_scores = False
+    if rounds:
+        last_round = list(rounds)[-1]
+        last_round_has_scores = bool(score_grid.get(last_round, {}))
+
+    at_round_limit = (
+        session.game.num_rounds is not None and
+        rounds.count() >= session.game.num_rounds
+    )
+
+    return {
+        'session': session,
+        'participants': participants,
+        'rounds': rounds,
+        'score_grid': score_grid,
+        'totals': totals,
+        'best_score': best_score,
+        'last_round_has_scores': last_round_has_scores,
+        'at_round_limit': at_round_limit,
+    }
 
 
 class SessionListView(ListView):
@@ -27,11 +71,12 @@ class SessionCreateView(LoginRequiredMixin, View):
     template_name = 'scoring/session_create.html'
 
     def get(self, request):
-        games = Game.objects.filter(play_mode=Game.PlayMode.INDIVIDUAL).order_by('name')
-        # Pre-select game if passed via query param from game detail page
+        all_games = Game.objects.order_by('name')
         selected_game_id = request.GET.get('game')
         return render(request, self.template_name, {
-            'games': games,
+            'games': all_games,
+            'individual_games': all_games.filter(play_mode=Game.PlayMode.INDIVIDUAL),
+            'team_games': all_games.filter(play_mode=Game.PlayMode.TEAM),
             'selected_game_id': int(selected_game_id) if selected_game_id else None,
         })
 
@@ -44,48 +89,59 @@ class SessionCreateView(LoginRequiredMixin, View):
 
 
 class SessionPlayersView(LoginRequiredMixin, View):
-    """Step 2 — Select players and start session."""
+    """Step 2 — Select players or teams and start session."""
     template_name = 'scoring/session_players.html'
 
     def get(self, request, game_id):
         game = get_object_or_404(Game, pk=game_id)
-        players = Player.objects.order_by('name')
         return render(request, self.template_name, {
             'game': game,
-            'players': players,
+            'players': Player.objects.order_by('name'),
+            'teams': Team.objects.prefetch_related('players').order_by('name'),
         })
 
     def post(self, request, game_id):
         game = get_object_or_404(Game, pk=game_id)
-        player_ids = request.POST.getlist('players')
 
-        if len(player_ids) < 2:
-            messages.error(request, 'Please select at least 2 players.')
-            players = Player.objects.order_by('name')
-            return render(request, self.template_name, {
-                'game': game,
-                'players': players,
-            })
+        session = Session.objects.create(game=game, created_by=request.user)
 
-        # Create the session
-        session = Session.objects.create(
-            game=game,
-            created_by=request.user,
-        )
+        if game.play_mode == Game.PlayMode.TEAM:
+            team_ids = request.POST.getlist('teams')
+            if len(team_ids) < 2:
+                messages.error(request, 'Please select at least 2 teams.')
+                session.delete()
+                return render(request, self.template_name, {
+                    'game': game,
+                    'players': Player.objects.order_by('name'),
+                    'teams': Team.objects.prefetch_related('players').order_by('name'),
+                })
+            for order, team_id in enumerate(team_ids):
+                team = get_object_or_404(Team, pk=team_id)
+                SessionPlayer.objects.create(
+                    session=session,
+                    team=team,
+                    display_order=order,
+                )
+        else:
+            player_ids = request.POST.getlist('players')
+            if len(player_ids) < 2:
+                messages.error(request, 'Please select at least 2 players.')
+                session.delete()
+                return render(request, self.template_name, {
+                    'game': game,
+                    'players': Player.objects.order_by('name'),
+                    'teams': Team.objects.prefetch_related('players').order_by('name'),
+                })
+            for order, player_id in enumerate(player_ids):
+                player = get_object_or_404(Player, pk=player_id)
+                SessionPlayer.objects.create(
+                    session=session,
+                    player=player,
+                    display_order=order,
+                )
 
-        # Create SessionPlayer entries in selected order
-        for order, player_id in enumerate(player_ids):
-            player = get_object_or_404(Player, pk=player_id)
-            SessionPlayer.objects.create(
-                session=session,
-                player=player,
-                display_order=order,
-            )
-
-        # Create the first round automatically
         Round.objects.create(session=session, round_number=1)
-
-        messages.success(request, f'Session started! Good luck everyone.')
+        messages.success(request, 'Session started! Good luck everyone.')
         return redirect('scoring:detail', pk=session.pk)
 
 
@@ -97,47 +153,7 @@ class SessionDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        session = self.object
-        participants = session.participants.select_related('player').order_by('display_order')
-        rounds = session.rounds.prefetch_related('scores').order_by('round_number')
-
-        # Build score grid: {round: {session_player_id: score_obj}}
-        score_grid = {}
-        for round in rounds:
-            score_grid[round] = {}
-            for score in round.scores.all():
-                score_grid[round][score.session_player_id] = score
-
-        # Running totals per participant
-        totals = {}
-        for sp in participants:
-            totals[sp.id] = sp.scores.aggregate(total=Sum('points'))['total'] or 0
-
-        # Best score for highlighting in totals row
-        if totals:
-            if session.game.scoring_mode == Game.ScoringMode.LOWEST:
-                best_score = min(totals.values())
-            else:
-                best_score = max(totals.values())
-        else:
-            best_score = None
-
-        # Check if last round has any scores entered
-        last_round_has_scores = False
-        if rounds:
-            last_round = rounds[len(rounds) - 1]
-            last_round_has_scores = score_grid.get(last_round, {}) != {}
-
-        ctx['last_round_has_scores'] = last_round_has_scores
-        ctx['at_round_limit'] = (
-            session.game.num_rounds is not None and 
-            rounds.count() >= session.game.num_rounds
-        )    
-        ctx['participants'] = participants
-        ctx['rounds'] = rounds
-        ctx['score_grid'] = score_grid
-        ctx['totals'] = totals
-        ctx['best_score'] = best_score
+        ctx.update(build_score_context(self.object))
         return ctx
 
 
@@ -150,62 +166,14 @@ class AddRoundView(LoginRequiredMixin, View):
         if session.is_complete:
             return HttpResponse('Session is complete.', status=400)
 
-        # Check round limit
         current_count = session.rounds.count()
         if session.game.num_rounds and current_count >= session.game.num_rounds:
             return HttpResponse(
                 f'Maximum rounds ({session.game.num_rounds}) reached.', status=400
             )
 
-        new_round = Round.objects.create(
-            session=session,
-            round_number=current_count + 1,
-        )
-
-        # Re-render just the score table body via HTMX
-        participants = session.participants.select_related('player').order_by('display_order')
-        rounds = session.rounds.prefetch_related('scores').order_by('round_number')
-
-        score_grid = {}
-        for r in rounds:
-            score_grid[r] = {}
-            for score in r.scores.all():
-                score_grid[r][score.session_player_id] = score
-
-        totals = {}
-        for sp in participants:
-            totals[sp.id] = sp.scores.aggregate(total=Sum('points'))['total'] or 0
-            
-        # Best score for highlighting in totals row
-        if totals:
-            if session.game.scoring_mode == Game.ScoringMode.LOWEST:
-                best_score = min(totals.values())
-            else:
-                best_score = max(totals.values())
-        else:
-            best_score = None
-
-        # Round limit checks
-        last_round_has_scores = False
-        if rounds:
-            last_round = list(rounds)[-1]
-            last_round_has_scores = bool(score_grid.get(last_round, {}))
-
-        at_round_limit = (
-            session.game.num_rounds is not None and
-            rounds.count() >= session.game.num_rounds
-        )
-            
-        return render(request, 'scoring/partials/score_table.html', {
-            'session': session,
-            'participants': participants,
-            'rounds': rounds,
-            'score_grid': score_grid,
-            'totals': totals,
-            'best_score': best_score,
-            'last_round_has_scores': last_round_has_scores,
-            'at_round_limit': at_round_limit,
-        })
+        Round.objects.create(session=session, round_number=current_count + 1)
+        return render(request, 'scoring/partials/score_table.html', build_score_context(session))
 
 
 class SaveScoreView(LoginRequiredMixin, View):
@@ -243,71 +211,20 @@ class SaveScoreView(LoginRequiredMixin, View):
             session.ended_at = timezone.now()
             session.save()
 
-        # Build score grid
-        rounds = session.rounds.prefetch_related('scores').order_by('round_number')
-        score_grid = {}
-        for r in rounds:
-            score_grid[r] = {}
-            for score in r.scores.all():
-                score_grid[r][score.session_player_id] = score
-
-        participants = session.participants.select_related('player').order_by('display_order')
-        totals = {}
-        for sp in participants:
-            totals[sp.id] = sp.scores.aggregate(total=Sum('points'))['total'] or 0
-
-        if totals:
-            if session.game.scoring_mode == Game.ScoringMode.LOWEST:
-                best_score = min(totals.values())
-            else:
-                best_score = max(totals.values())
-        else:
-            best_score = None
-            
-        # Auto-add next round if all players have scored in the current round
-        # and we haven't hit the round limit
+        # Auto-add next round if all participants have scored
         if not session.is_complete:
             current_round = Round.objects.get(pk=round_id)
-            participant_count = participants.count()
+            participant_count = session.participants.count()
             scores_in_round = Score.objects.filter(round=current_round).count()
 
             if scores_in_round >= participant_count:
-                # All players have scored this round
-                current_round_count = rounds.count()
+                current_round_count = session.rounds.count()
                 if not session.game.num_rounds or current_round_count < session.game.num_rounds:
-                    # Check a next round doesn't already exist
                     next_round_number = current_round.round_number + 1
                     if not Round.objects.filter(session=session, round_number=next_round_number).exists():
                         Round.objects.create(session=session, round_number=next_round_number)
-                        # Refresh rounds queryset to include new round
-                        rounds = session.rounds.prefetch_related('scores').order_by('round_number')
-                        score_grid = {}
-                        for r in rounds:
-                            score_grid[r] = {}
-                            for score in r.scores.all():
-                                score_grid[r][score.session_player_id] = score
-        
-        # Calculate once after potential new round
-        last_round_has_scores = False
-        if rounds:
-            last_round = list(rounds)[-1]
-            last_round_has_scores = bool(score_grid.get(last_round, {}))
 
-        at_round_limit = (
-            session.game.num_rounds is not None and
-            rounds.count() >= session.game.num_rounds
-        )
-
-        return render(request, 'scoring/partials/score_table.html', {
-            'session': session,
-            'participants': participants,
-            'rounds': rounds,
-            'score_grid': score_grid,
-            'totals': totals,
-            'best_score': best_score,
-            'last_round_has_scores': last_round_has_scores,
-            'at_round_limit': at_round_limit,
-        })
+        return render(request, 'scoring/partials/score_table.html', build_score_context(session))
 
 
 class CompleteSessionView(LoginRequiredMixin, View):
@@ -316,7 +233,6 @@ class CompleteSessionView(LoginRequiredMixin, View):
     def post(self, request, pk):
         session = get_object_or_404(Session, pk=pk)
 
-        # Determine winner based on scoring mode
         totals = session.get_totals()
         if totals:
             if session.game.scoring_mode == Game.ScoringMode.LOWEST:
@@ -334,27 +250,9 @@ class CompleteSessionView(LoginRequiredMixin, View):
 
 
 class TotalsRowView(View):
-    """Return just the totals row — used by HTMX after score updates."""
+    """Return just the totals row."""
 
     def get(self, request, session_pk):
         session = get_object_or_404(Session, pk=session_pk)
-        participants = session.participants.select_related('player').order_by('display_order')
-        totals = {}
-        for sp in participants:
-            totals[sp.id] = sp.scores.aggregate(total=Sum('points'))['total'] or 0
-            
-        # Calculate best_score
-        if totals:
-            if session.game.scoring_mode == Game.ScoringMode.LOWEST:
-                best_score = min(totals.values())
-            else:
-                best_score = max(totals.values())
-        else:
-            best_score = None
-
-        return render(request, 'scoring/partials/totals_row.html', {
-            'session': session,
-            'participants': participants,
-            'totals': totals,
-            'best_score': best_score,  
-        })
+        ctx = build_score_context(session)
+        return render(request, 'scoring/partials/totals_row.html', ctx)

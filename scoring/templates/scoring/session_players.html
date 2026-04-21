@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Select Players — ScoreKeeper{% endblock %}
+{% block title %}Select {% if game.play_mode == 'team' %}Teams{% else %}Players{% endif %} — ScoreKeeper{% endblock %}
 
 {% block content %}
 <div class="max-w-lg mx-auto">
@@ -10,53 +10,104 @@
             ← Back to Game Selection
         </a>
         <h1 class="text-2xl font-bold text-gray-800 mt-2">New Session</h1>
-        <p class="text-gray-500 text-sm mt-1">Step 2 of 2 — Select players for <strong>{{ game.name }}</strong></p>
+        <p class="text-gray-500 text-sm mt-1">
+            Step 2 of 2 — Select
+            {% if game.play_mode == 'team' %}teams{% else %}players{% endif %}
+            for <strong>{{ game.name }}</strong>
+        </p>
     </div>
 
     <div class="bg-white shadow-sm rounded-xl border border-gray-200 p-6">
         <form method="post">
             {% csrf_token %}
 
-            {% if players %}
-            <p class="text-xs text-gray-400 mb-3">Select at least 2 players. Order selected = column order on score sheet.</p>
+            {% if game.play_mode == 'team' %}
 
-            <div class="space-y-2 mb-6">
-                {% for player in players %}
-                <label class="flex items-center p-3 rounded-lg border border-gray-200 hover:border-indigo-300 cursor-pointer transition-colors duration-150">
-                    <input type="checkbox"
-                           name="players"
-                           value="{{ player.pk }}"
-                           class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
-                    <div class="ml-3">
-                        <span class="text-sm font-medium text-gray-800">{{ player.name }}</span>
-                        {% if player.nickname %}
-                        <span class="text-xs text-gray-400 ml-1">({{ player.nickname }})</span>
-                        {% endif %}
-                    </div>
-                </label>
-                {% endfor %}
-            </div>
+                {% if teams %}
+                <p class="text-xs text-gray-400 mb-3">Select at least 2 teams to play.</p>
+                <div class="space-y-2 mb-6">
+                    {% for team in teams %}
+                    <label class="flex items-start p-3 rounded-lg border border-gray-200 hover:border-indigo-300 cursor-pointer transition-colors duration-150">
+                        <input type="checkbox"
+                               name="teams"
+                               value="{{ team.pk }}"
+                               class="mt-0.5 h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                        <div class="ml-3">
+                            <span class="text-sm font-medium text-gray-800">{{ team.name }}</span>
+                            <span class="text-xs text-gray-400 ml-2">
+                                {{ team.players.count }} player{{ team.players.count|pluralize }}:
+                                {% for player in team.players.all %}{{ player.display_name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                            </span>
+                        </div>
+                    </label>
+                    {% endfor %}
+                </div>
 
-            <div class="flex items-center justify-between pt-2 border-t border-gray-100">
-                <a href="{% url 'players:create' %}"
-                   class="text-sm text-indigo-600 hover:text-indigo-800">
-                    + Add a new player
-                </a>
-                <button type="submit"
-                        class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-6 py-2 rounded-lg transition-colors duration-150">
-                    Start Session →
-                </button>
-            </div>
+                <div class="flex items-center justify-between pt-2 border-t border-gray-100">
+                    <a href="{% url 'players:team_create' %}"
+                       class="text-sm text-indigo-600 hover:text-indigo-800">
+                        + Add a new team
+                    </a>
+                    <button type="submit"
+                            class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-6 py-2 rounded-lg transition-colors duration-150">
+                        Start Session →
+                    </button>
+                </div>
+
+                {% else %}
+                <div class="text-center py-8">
+                    <p class="text-4xl mb-3">👥</p>
+                    <p class="text-gray-500 text-sm mb-4">No teams set up yet.</p>
+                    <a href="{% url 'players:team_create' %}"
+                       class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-5 py-2 rounded-lg">
+                        + Create Teams First
+                    </a>
+                </div>
+                {% endif %}
 
             {% else %}
-            <div class="text-center py-8">
-                <p class="text-4xl mb-3">👤</p>
-                <p class="text-gray-500 text-sm mb-4">No players in the roster yet.</p>
-                <a href="{% url 'players:create' %}"
-                   class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-5 py-2 rounded-lg">
-                    + Add Players First
-                </a>
-            </div>
+
+                {% if players %}
+                <p class="text-xs text-gray-400 mb-3">Select at least 2 players. Order selected = column order on score sheet.</p>
+                <div class="space-y-2 mb-6">
+                    {% for player in players %}
+                    <label class="flex items-center p-3 rounded-lg border border-gray-200 hover:border-indigo-300 cursor-pointer transition-colors duration-150">
+                        <input type="checkbox"
+                               name="players"
+                               value="{{ player.pk }}"
+                               class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                        <div class="ml-3">
+                            <span class="text-sm font-medium text-gray-800">{{ player.name }}</span>
+                            {% if player.nickname %}
+                            <span class="text-xs text-gray-400 ml-1">({{ player.nickname }})</span>
+                            {% endif %}
+                        </div>
+                    </label>
+                    {% endfor %}
+                </div>
+
+                <div class="flex items-center justify-between pt-2 border-t border-gray-100">
+                    <a href="{% url 'players:create' %}"
+                       class="text-sm text-indigo-600 hover:text-indigo-800">
+                        + Add a new player
+                    </a>
+                    <button type="submit"
+                            class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-6 py-2 rounded-lg transition-colors duration-150">
+                        Start Session →
+                    </button>
+                </div>
+
+                {% else %}
+                <div class="text-center py-8">
+                    <p class="text-4xl mb-3">👤</p>
+                    <p class="text-gray-500 text-sm mb-4">No players in the roster yet.</p>
+                    <a href="{% url 'players:create' %}"
+                       class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-5 py-2 rounded-lg">
+                        + Add Players First
+                    </a>
+                </div>
+                {% endif %}
+
             {% endif %}
 
         </form>

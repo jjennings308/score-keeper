@@ -45,9 +45,8 @@
                           class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-sm">{{ form.description.value|default:'' }}</textarea>
             </div>
 
-            <!-- Play Mode & Scoring Mode side by side -->
+            <!-- Play Mode & Scoring Mode -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
-
                 <div>
                     <label for="{{ form.play_mode.id_for_label }}"
                            class="block text-sm font-medium text-gray-700 mb-1">
@@ -62,9 +61,6 @@
                         </option>
                         {% endfor %}
                     </select>
-                    {% for error in form.play_mode.errors %}
-                    <p class="mt-1 text-xs text-red-500">{{ error }}</p>
-                    {% endfor %}
                 </div>
 
                 <div>
@@ -81,16 +77,29 @@
                         </option>
                         {% endfor %}
                     </select>
-                    {% for error in form.scoring_mode.errors %}
-                    <p class="mt-1 text-xs text-red-500">{{ error }}</p>
-                    {% endfor %}
                 </div>
-
             </div>
 
-            <!-- Winning Score & Num Rounds side by side -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
+            <!-- Team Scoring (only relevant for team games) -->
+            <div class="mb-5">
+                <label for="{{ form.team_scoring.id_for_label }}"
+                       class="block text-sm font-medium text-gray-700 mb-1">
+                    Team Scoring Method
+                </label>
+                <select name="{{ form.team_scoring.html_name }}"
+                        id="{{ form.team_scoring.id_for_label }}"
+                        class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-sm">
+                    {% for value, label in form.team_scoring.field.choices %}
+                    <option value="{{ value }}" {% if value == form.team_scoring.value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <p class="mt-1 text-xs text-gray-400">Only applies when Play Mode is Team.</p>
+            </div>
 
+            <!-- Winning Score & Num Rounds -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
                 <div>
                     <label for="{{ form.winning_score.id_for_label }}"
                            class="block text-sm font-medium text-gray-700 mb-1">
@@ -102,9 +111,6 @@
                            value="{{ form.winning_score.value|default:'' }}"
                            class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-sm">
                     <p class="mt-1 text-xs text-gray-400">Leave blank for no score limit.</p>
-                    {% for error in form.winning_score.errors %}
-                    <p class="mt-1 text-xs text-red-500">{{ error }}</p>
-                    {% endfor %}
                 </div>
 
                 <div>
@@ -118,11 +124,7 @@
                            value="{{ form.num_rounds.value|default:'' }}"
                            class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-sm">
                     <p class="mt-1 text-xs text-gray-400">Leave blank for open-ended play.</p>
-                    {% for error in form.num_rounds.errors %}
-                    <p class="mt-1 text-xs text-red-500">{{ error }}</p>
-                    {% endfor %}
                 </div>
-
             </div>
 
             <!-- Allow Negative -->
