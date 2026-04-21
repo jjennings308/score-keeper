@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}{{ game.name }} Stats — ScoreKeeper{% endblock %}
+
+{% block content %}
+
+<div class="mb-6">
+    <a href="{% url 'stats:games' %}{% if days %}?days={{ days }}{% endif %}"
+       class="text-sm text-indigo-600 hover:text-indigo-800">
+        ← Back to Game Stats
+    </a>
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between mt-2 gap-4">
+        <h1 class="text-2xl font-bold text-gray-800">{{ game.name }}</h1>
+        <a href="{% url 'stats:players' %}{% if days %}?days={{ days }}{% endif %}"
+           class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+            View Player Stats →
+        </a>
+    </div>
+</div>
+
+<!-- Date Filter -->
+<div class="flex flex-wrap gap-2 mb-6">
+    <span class="text-sm text-gray-500 self-center">Filter:</span>
+    <a href="{% url 'stats:game_detail' game.pk %}"
+       class="px-3 py-1 rounded-full text-xs font-medium {% if not days %}bg-indigo-100 text-indigo-700{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %}">
+        All time
+    </a>
+    <a href="?days=30"
+       class="px-3 py-1 rounded-full text-xs font-medium {% if days == '30' %}bg-indigo-100 text-indigo-700{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %}">
+        Last 30 days
+    </a>
+    <a href="?days=90"
+       class="px-3 py-1 rounded-full text-xs font-medium {% if days == '90' %}bg-indigo-100 text-indigo-700{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %}">
+        Last 90 days
+    </a>
+    <a href="?days=365"
+       class="px-3 py-1 rounded-full text-xs font-medium {% if days == '365' %}bg-indigo-100 text-indigo-700{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %}">
+        Last year
+    </a>
+</div>
+
+<!-- Summary Cards -->
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+    <div class="bg-white rounded-xl border border-gray-200 p-4 text-center">
+        <p class="text-2xl font-bold text-indigo-600">{{ total_sessions }}</p>
+        <p class="text-xs text-gray-400 mt-1">Sessions Played</p>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 p-4 text-center">
+        <p class="text-2xl font-bold text-gray-800">{{ score_agg.avg|floatformat:1|default:"—" }}</p>
+        <p class="text-xs text-gray-400 mt-1">Avg Round Score</p>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 p-4 text-center">
+        <p class="text-2xl font-bold text-green-600">{{ score_agg.high|default:"—" }}</p>
+        <p class="text-xs text-gray-400 mt-1">High Round Score</p>
+    </div>
+    <div class="bg-white rounded-xl border border-gray-200 p-4 text-center">
+        <p class="text-2xl font-bold text-red-500">{{ score_agg.low|default:"—" }}</p>
+        <p class="text-xs text-gray-400 mt-1">Low Round Score</p>
+    </div>
+</div>
+
+<!-- Winners Leaderboard -->
+{% if winners_ranked %}
+<div class="bg-white shadow-sm rounded-xl border border-gray-200 p-6 mb-6">
+    <h2 class="text-base font-semibold text-gray-700 mb-4">Win Leaderboard</h2>
+    <div class="space-y-2">
+        {% for name, wins in winners_ranked %}
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <span class="text-sm font-medium text-gray-800">
+                    {% if forloop.first %}🥇{% elif forloop.counter == 2 %}🥈{% elif forloop.counter == 3 %}🥉{% else %}{{ forloop.counter }}.{% endif %}
+                    {{ name }}
+                </span>
+            </div>
+            <div class="flex items-center space-x-3">
+                <div class="w-32 bg-gray-100 rounded-full h-2">
+                    <div class="bg-indigo-500 h-2 rounded-full"
+                         style="width: {% widthratio wins winners_ranked.0.1 100 %}%">
+                    </div>
+                </div>
+                <span class="text-sm font-semibold text-gray-700 w-16 text-right">
+                    {{ wins }} win{{ wins|pluralize }}
+                </span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Session History -->
+<div class="bg-white shadow-sm rounded-xl border border-gray-200 p-6">
+    <h2 class="text-base font-semibold text-gray-700 mb-4">Recent Sessions</h2>
+    {% if session_history %}
+    <div class="space-y-3">
+        {% for item in session_history %}
+        <div class="flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+            <div>
+                <a href="{% url 'scoring:detail' item.session.pk %}"
+                   class="text-sm font-medium text-gray-800 hover:text-indigo-600">
+                    Session #{{ item.session.pk }}
+                </a>
+                <p class="text-xs text-gray-400">{{ item.session.started_at|date:"M j, Y" }}</p>
+            </div>
+            <div class="flex flex-wrap gap-2 justify-end">
+                {% for name, total in item.totals.items %}
+                <span class="text-xs px-2 py-1 rounded {% if name == item.session.winner %}bg-yellow-100 text-yellow-800 font-semibold{% else %}bg-gray-200 text-gray-600{% endif %}">
+                    {{ name }}: {{ total }}
+                </span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-gray-400 text-sm">No completed sessions in this period.</p>
+    {% endif %}
+</div>
+
+{% endblock %}

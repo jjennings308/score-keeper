@@ -8,4 +8,5 @@ urlpatterns = [
     path('games/', include('games.urls', namespace='games')),
     path('players/', include('players.urls', namespace='players')),
     path('sessions/', include('scoring.urls', namespace='scoring')),
+    path('stats/', include('stats.urls', namespace='stats')),
 ]

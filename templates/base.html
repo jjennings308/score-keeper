@@ -51,6 +51,10 @@
                        class="text-indigo-100 hover:bg-indigo-600 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150">
                         Players
                     </a>
+                    <a href="{% url 'stats:games' %}"
+                       class="text-indigo-100 hover:bg-indigo-600 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150">
+                        Stats
+                    </a>
                     <a href="{% url 'scoring:create' %}"
                        class="ml-4 bg-white text-indigo-700 hover:bg-indigo-50 px-4 py-2 rounded-md text-sm font-semibold transition-colors duration-150">
                         + New Game
@@ -96,6 +100,10 @@
                 <a href="{% url 'players:list' %}"
                    class="block text-indigo-100 hover:bg-indigo-600 hover:text-white px-3 py-2 rounded-md text-base font-medium">
                     Players
+                </a>
+                <a href="{% url 'stats:games' %}"
+                   class="block text-indigo-100 hover:bg-indigo-600 hover:text-white px-3 py-2 rounded-md text-base font-medium">
+                    Stats
                 </a>
                 <a href="{% url 'scoring:create' %}"
                    class="block bg-white text-indigo-700 hover:bg-indigo-50 px-3 py-2 rounded-md text-base font-semibold">
