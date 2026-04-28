@@ -80,7 +80,7 @@
                 </div>
             </div>
 
-            <!-- Team Scoring (only relevant for team games) -->
+            <!-- Team Scoring -->
             <div class="mb-5">
                 <label for="{{ form.team_scoring.id_for_label }}"
                        class="block text-sm font-medium text-gray-700 mb-1">
@@ -127,20 +127,37 @@
                 </div>
             </div>
 
-            <!-- Allow Negative -->
-            <div class="mb-6">
+            <!-- Checkboxes: Allow Negative & Requires Dealer -->
+            <div class="space-y-3 mb-6">
                 <div class="flex items-center space-x-3">
                     <input type="checkbox"
                            name="{{ form.allow_negative.html_name }}"
                            id="{{ form.allow_negative.id_for_label }}"
                            {% if form.allow_negative.value %}checked{% endif %}
                            class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                    <label for="{{ form.allow_negative.id_for_label }}"
-                           class="text-sm font-medium text-gray-700">
-                        Allow negative scores
-                    </label>
+                    <div>
+                        <label for="{{ form.allow_negative.id_for_label }}"
+                               class="text-sm font-medium text-gray-700">
+                            Allow negative scores
+                        </label>
+                        <p class="text-xs text-gray-400">Enable for games with penalty points.</p>
+                    </div>
                 </div>
-                <p class="mt-1 text-xs text-gray-400 ml-7">Enable for games with penalty points.</p>
+
+                <div class="flex items-center space-x-3">
+                    <input type="checkbox"
+                           name="{{ form.requires_dealer.html_name }}"
+                           id="{{ form.requires_dealer.id_for_label }}"
+                           {% if form.requires_dealer.value %}checked{% endif %}
+                           class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                    <div>
+                        <label for="{{ form.requires_dealer.id_for_label }}"
+                               class="text-sm font-medium text-gray-700">
+                            Rotating dealer
+                        </label>
+                        <p class="text-xs text-gray-400">Shows who deals each round, rotating through players in order.</p>
+                    </div>
+                </div>
             </div>
 
             <div class="flex items-center justify-between pt-2 border-t border-gray-100">

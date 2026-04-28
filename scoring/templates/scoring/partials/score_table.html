@@ -5,6 +5,11 @@
             <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-16">
                 Round
             </th>
+            {% if session.game.requires_dealer %}
+            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-24">
+                Dealer
+            </th>
+            {% endif %}
             {% for sp in participants %}
             <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
                 {{ sp.display_name }}
@@ -18,6 +23,17 @@
             <td class="px-4 py-2 text-sm text-gray-400 font-medium">
                 {{ round.round_number }}
             </td>
+            {% if session.game.requires_dealer %}
+            <td class="px-4 py-2">
+                {% if round.dealer %}
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
+                    🃏 {{ round.dealer.display_name }}
+                </span>
+                {% else %}
+                <span class="text-gray-300 text-xs">—</span>
+                {% endif %}
+            </td>
+            {% endif %}
             {% for sp in participants %}
             <td class="px-4 py-2 text-center">
                 {% with score=score_grid|get_item:round|get_item:sp.id %}

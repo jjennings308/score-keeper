@@ -126,6 +126,14 @@ class Round(models.Model):
     )
     round_number = models.PositiveIntegerField()
     completed_at = models.DateTimeField(null=True, blank=True)
+    dealer = models.ForeignKey(
+        SessionPlayer,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='dealt_rounds',
+        help_text="The player dealing this round"
+    )
 
     def __str__(self):
         return f"Round {self.round_number} of {self.session}"

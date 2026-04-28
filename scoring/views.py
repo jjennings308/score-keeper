@@ -11,10 +11,23 @@ from players.models import Player, Team
 from .models import Session, SessionPlayer, Round, Score
 
 
+def get_next_dealer(session, current_round_number):
+    """
+    Return the SessionPlayer who should deal for a given round number.
+    Rotates through participants in display_order, wrapping back to the start.
+    Round 1 = first participant, Round 2 = second, etc.
+    """
+    participants = list(session.participants.order_by('display_order'))
+    if not participants:
+        return None
+    index = (current_round_number - 1) % len(participants)
+    return participants[index]
+
+
 def build_score_context(session):
     """Shared helper to build all score sheet context data."""
     participants = session.participants.select_related('player', 'team').order_by('display_order')
-    rounds = session.rounds.prefetch_related('scores').order_by('round_number')
+    rounds = session.rounds.select_related('dealer__player', 'dealer__team').prefetch_related('scores').order_by('round_number')
 
     score_grid = {}
     for r in rounds:
@@ -102,7 +115,6 @@ class SessionPlayersView(LoginRequiredMixin, View):
 
     def post(self, request, game_id):
         game = get_object_or_404(Game, pk=game_id)
-
         session = Session.objects.create(game=game, created_by=request.user)
 
         if game.play_mode == Game.PlayMode.TEAM:
@@ -140,7 +152,10 @@ class SessionPlayersView(LoginRequiredMixin, View):
                     display_order=order,
                 )
 
-        Round.objects.create(session=session, round_number=1)
+        # Create first round, assigning dealer if game requires it
+        first_dealer = get_next_dealer(session, 1) if game.requires_dealer else None
+        Round.objects.create(session=session, round_number=1, dealer=first_dealer)
+
         messages.success(request, 'Session started! Good luck everyone.')
         return redirect('scoring:detail', pk=session.pk)
 
@@ -172,7 +187,9 @@ class AddRoundView(LoginRequiredMixin, View):
                 f'Maximum rounds ({session.game.num_rounds}) reached.', status=400
             )
 
-        Round.objects.create(session=session, round_number=current_count + 1)
+        next_round_number = current_count + 1
+        next_dealer = get_next_dealer(session, next_round_number) if session.game.requires_dealer else None
+        Round.objects.create(session=session, round_number=next_round_number, dealer=next_dealer)
         return render(request, 'scoring/partials/score_table.html', build_score_context(session))
 
 
@@ -222,7 +239,12 @@ class SaveScoreView(LoginRequiredMixin, View):
                 if not session.game.num_rounds or current_round_count < session.game.num_rounds:
                     next_round_number = current_round.round_number + 1
                     if not Round.objects.filter(session=session, round_number=next_round_number).exists():
-                        Round.objects.create(session=session, round_number=next_round_number)
+                        next_dealer = get_next_dealer(session, next_round_number) if session.game.requires_dealer else None
+                        Round.objects.create(
+                            session=session,
+                            round_number=next_round_number,
+                            dealer=next_dealer,
+                        )
 
         return render(request, 'scoring/partials/score_table.html', build_score_context(session))
 

@@ -50,6 +50,10 @@ class Game(models.Model):
         default=False,
         help_text="Whether negative scores are allowed (e.g. penalty points)"
     )
+    requires_dealer = models.BooleanField(
+        default=False,
+        help_text="Whether or not the dealer rotates between people"
+    )
     created_by = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
