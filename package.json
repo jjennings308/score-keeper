@@ -1,0 +1,24 @@
+{
+  "name": "code",
+  "version": "1.0.0",
+  "description": "Small to check score and keep results in a database",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jjennings308/score-keeper.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/jjennings308/score-keeper/issues"
+  },
+  "homepage": "https://github.com/jjennings308/score-keeper#readme",
+  "devDependencies": {
+    "tailwindcss": "^3.4.19"
+  }
+}

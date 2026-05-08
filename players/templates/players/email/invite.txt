@@ -1,0 +1,13 @@
+Hi {{ player.display_name }},
+
+{{ invited_by }} has invited you to claim your player profile on Score Keeper.
+
+You've already been part of {{ player.group_memberships.count }} game group{{ player.group_memberships.count|pluralize }} and your full game history is waiting for you.
+
+Click the link below to create your account and link it to your existing profile:
+
+{{ claim_url }}
+
+This link expires in 72 hours. If you weren't expecting this, you can safely ignore it.
+
+— Score Keeper

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Groups — ScoreKeeper{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-bold text-gray-800">Groups</h1>
+    <a href="{% url 'players:group_create' %}"
+       class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors duration-150">
+        + New Group
+    </a>
+</div>
+
+{% if groups %}
+<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    {% for group in groups %}
+    <div class="bg-white shadow-sm rounded-xl border border-gray-200 p-5">
+        <div class="flex items-start justify-between mb-3">
+            <div>
+                <a href="{% url 'players:group_detail' pk=group.pk %}"
+                   class="text-base font-semibold text-gray-800 hover:text-indigo-600">
+                    {{ group.name }}
+                </a>
+                {% if group.description %}
+                <p class="text-xs text-gray-400 mt-0.5">{{ group.description }}</p>
+                {% endif %}
+            </div>
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 flex-shrink-0 ml-2">
+                {{ group.memberships.count }} player{{ group.memberships.count|pluralize }}
+            </span>
+        </div>
+        <div class="flex flex-wrap gap-1 mb-4">
+            {% for membership in group.memberships.all %}
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-50 text-indigo-600">
+                {{ membership.player.display_name }}
+            </span>
+            {% endfor %}
+        </div>
+        <div class="flex items-center justify-between pt-3 border-t border-gray-100 text-sm">
+            <a href="{% url 'players:group_detail' pk=group.pk %}"
+               class="text-indigo-600 hover:text-indigo-800 font-medium">View →</a>
+            <div class="flex gap-3">
+                <a href="{% url 'players:group_update' pk=group.pk %}"
+                   class="text-gray-400 hover:text-gray-600">Edit</a>
+                <a href="{% url 'players:group_delete' pk=group.pk %}"
+                   class="text-red-400 hover:text-red-600">Delete</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% else %}
+<div class="text-center py-16 bg-white rounded-xl border border-gray-200">
+    <p class="text-4xl mb-3">👥</p>
+    <h3 class="text-lg font-medium text-gray-700 mb-1">No groups yet</h3>
+    <p class="text-gray-400 text-sm mb-6">Create a group to organize your players by family or friends.</p>
+    <a href="{% url 'players:group_create' %}"
+       class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors duration-150">
+        + New Group
+    </a>
+</div>
+{% endif %}
+{% endblock %}

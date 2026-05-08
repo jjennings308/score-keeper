@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Delete {{ group.name }}? — ScoreKeeper{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto">
+
+    <div class="mb-6">
+        <a href="{% url 'players:group_detail' pk=group.pk %}" class="text-sm text-indigo-600 hover:text-indigo-800">
+            ← Back
+        </a>
+        <h1 class="text-2xl font-bold text-gray-800 mt-2">Delete "{{ group.name }}"?</h1>
+    </div>
+
+    <div class="bg-white shadow-sm rounded-xl border border-gray-200 p-6">
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-6 text-sm text-yellow-700">
+            This will remove the group and all its memberships.
+            Player records and their game history will not be affected.
+        </div>
+
+        <div class="flex items-center justify-between">
+            <a href="{% url 'players:group_detail' pk=group.pk %}"
+               class="text-sm text-gray-500 hover:text-gray-700">Cancel</a>
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit"
+                        class="bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-6 py-2 rounded-lg transition-colors duration-150">
+                    Yes, delete this group
+                </button>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

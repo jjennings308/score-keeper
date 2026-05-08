@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Account Already Linked — ScoreKeeper{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto text-center py-16">
+    <p class="text-4xl mb-3">⚠️</p>
+    <h1 class="text-2xl font-bold text-gray-800 mb-2">Account already linked</h1>
+    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-6 text-sm text-yellow-700 text-left">
+        Your account (<strong>{{ user.username }}</strong>) is already linked to
+        <strong>{{ existing_profile.display_name }}</strong>.
+        An account can only be linked to one player profile.
+    </div>
+    <p class="text-gray-500 text-sm mb-6">
+        If you think this is an error, contact the person who manages this app.
+    </p>
+    <a href="{% url 'players:detail' pk=existing_profile.pk %}"
+       class="border border-gray-300 hover:border-gray-400 text-gray-600 text-sm font-medium px-5 py-2 rounded-lg transition-colors duration-150">
+        View my profile
+    </a>
+</div>
+{% endblock %}

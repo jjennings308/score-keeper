@@ -1,20 +1,13 @@
 {% extends "base.html" %}
-
 {% block title %}Players — ScoreKeeper{% endblock %}
 
 {% block content %}
 <div class="flex items-center justify-between mb-6">
     <h1 class="text-2xl font-bold text-gray-800">Players</h1>
-    <div class="flex space-x-3">
-        <a href="{% url 'players:team_list' %}"
-           class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
-            View Teams →
-        </a>
-        <a href="{% url 'players:create' %}"
-           class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors duration-150">
-            + Add Player
-        </a>
-    </div>
+    <a href="{% url 'players:create' %}"
+       class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors duration-150">
+        + Add Player
+    </a>
 </div>
 
 {% if players %}
@@ -22,34 +15,27 @@
     <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
             <tr>
-                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Name
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Teams
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Added
-                </th>
-                <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Actions
-                </th>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Name</th>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Groups</th>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Games Played</th>
+                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Account</th>
+                <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Action</th>
             </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-100">
             {% for player in players %}
             <tr class="hover:bg-gray-50 transition-colors duration-100">
                 <td class="px-6 py-4 whitespace-nowrap">
-                    <a href="{% url 'players:detail' player.pk %}"
-                       class="text-gray-900 font-medium hover:text-indigo-600">
-                        {{ player.name }}
-                    </a>
+                    <span class="text-gray-900 font-medium">{{ player.display_name }}</span>
+                    {% if player.nickname %}
+                    <span class="text-xs text-gray-400 ml-1">({{ player.name }})</span>
+                    {% endif %}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="px-6 py-4">
                     <div class="flex flex-wrap gap-1">
-                        {% for team in player.teams.all %}
-                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-700">
-                            {{ team.name }}
+                        {% for membership in player.group_memberships.all %}
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                            {{ membership.group.name }}
                         </span>
                         {% empty %}
                         <span class="text-gray-400 text-sm">—</span>
@@ -57,13 +43,26 @@
                     </div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {{ player.created_at|date:"M j, Y" }}
+                    {{ player.session_entries.count }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    {% if player.user %}
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">
+                        Registered
+                    </span>
+                    {% elif player.email %}
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-700">
+                        Invite pending
+                    </span>
+                    {% else %}
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-500">
+                        Player only
+                    </span>
+                    {% endif %}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-right">
-                    <a href="{% url 'players:update' player.pk %}"
-                       class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
-                        Edit
-                    </a>
+                    <a href="{% url 'players:detail' pk=player.pk %}"
+                       class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">View →</a>
                 </td>
             </tr>
             {% endfor %}

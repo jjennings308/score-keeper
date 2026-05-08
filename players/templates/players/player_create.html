@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Add Player — ScoreKeeper{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto">
+
+    <div class="mb-6">
+        <a href="{% url 'players:list' %}" class="text-sm text-indigo-600 hover:text-indigo-800">
+            ← Back to Players
+        </a>
+        <h1 class="text-2xl font-bold text-gray-800 mt-2">Add Player</h1>
+    </div>
+
+    <div class="bg-white shadow-sm rounded-xl border border-gray-200 p-6">
+        <form method="post">
+            {% csrf_token %}
+
+            {% if groups %}
+            <div class="mb-5">
+                <label for="group_id" class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                    Add to Group <span class="normal-case font-normal text-gray-400">(optional)</span>
+                </label>
+                <select name="group_id" id="group_id"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <option value="">— no group —</option>
+                    {% for group in groups %}
+                    <option value="{{ group.pk }}" {% if post.group_id == group.pk|stringformat:"s" %}selected{% endif %}>
+                        {{ group.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+
+            <div class="mb-5">
+                <label for="name" class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                    Name
+                </label>
+                <input type="text" name="name" id="name"
+                       value="{{ post.name|default:'' }}"
+                       placeholder="Full name"
+                       required autofocus
+                       class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+
+            <div class="mb-5">
+                <label for="nickname" class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                    Nickname <span class="normal-case font-normal text-gray-400">(optional)</span>
+                </label>
+                <input type="text" name="nickname" id="nickname"
+                       value="{{ post.nickname|default:'' }}"
+                       placeholder="e.g. Jimmy"
+                       class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+
+            <div class="mb-6">
+                <label for="email" class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                    Email <span class="normal-case font-normal text-gray-400">(optional)</span>
+                </label>
+                <input type="email" name="email" id="email"
+                       value="{{ post.email|default:'' }}"
+                       placeholder="player@example.com"
+                       class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                <p class="text-xs text-gray-400 mt-1.5">
+                    Used to find existing players and send invite links. If someone with this email already exists, we'll ask you to confirm.
+                </p>
+            </div>
+
+            <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+                <a href="{% url 'players:list' %}"
+                   class="text-sm text-gray-500 hover:text-gray-700">Cancel</a>
+                <button type="submit"
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-6 py-2 rounded-lg transition-colors duration-150">
+                    Add Player
+                </button>
+            </div>
+        </form>
+    </div>
+
+</div>
+{% endblock %}
