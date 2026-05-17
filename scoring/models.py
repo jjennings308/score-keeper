@@ -33,7 +33,6 @@ class Session(models.Model):
         related_name='sessions',
         help_text="The player group roster this session was drawn from"
     )
-    # Magic link token for table-side scoring without login
     token = models.CharField(
         max_length=64,
         unique=True,
@@ -71,12 +70,10 @@ class Session(models.Model):
         return not self.is_complete and timezone.now() < self.token_expires
 
     def extend_token(self, hours=24):
-        """Extend the scoring window if a game is running long."""
         self.token_expires = timezone.now() + timedelta(hours=hours)
         self.save(update_fields=['token_expires'])
 
     def get_totals(self):
-        """Return {SessionPlayer: running_total} for all participants."""
         totals = {}
         for sp in self.participants.all():
             total = sp.scores.aggregate(total=Sum('points'))['total'] or 0
@@ -84,18 +81,31 @@ class Session(models.Model):
         return totals
 
     def check_winner(self):
-        """Check if a winning condition has been met. Returns winning SessionPlayer or None."""
         game = self.game
         if not game.winning_score:
             return None
         totals = self.get_totals()
+        
         if game.scoring_mode == Game.ScoringMode.TARGET:
+            # First to reach wins
             winners = [sp for sp, total in totals.items() if total >= game.winning_score]
             return winners[0] if winners else None
+        
+        elif game.scoring_mode == Game.ScoringMode.CUMULATIVE:
+            # End when someone reaches or exceeds the winning score
+            winners = [sp for sp, total in totals.items() if total >= game.winning_score]
+            if winners:
+                return max(winners, key=lambda sp: totals[sp])
+            return None
+        
         elif game.scoring_mode == Game.ScoringMode.LOWEST:
+            # End when someone reaches or exceeds the winning score (it's a cap)
             if totals:
                 return min(totals, key=totals.get)
+            return None
+        
         return None
+    
 
     def __str__(self):
         return f"{self.game.name} — {self.started_at.strftime('%Y-%m-%d %H:%M')}"
@@ -105,12 +115,6 @@ class Session(models.Model):
 
 
 class SessionPlayer(models.Model):
-    """
-    A participant in a session — either an individual player or a team.
-    Exactly one of `player` or `team` should be set.
-    Scores point here, not at Player or User directly — this preserves
-    full history through player upgrades and account linking.
-    """
     session = models.ForeignKey(
         Session,
         on_delete=models.CASCADE,
@@ -171,6 +175,10 @@ class Round(models.Model):
     )
     round_number = models.PositiveIntegerField()
     completed_at = models.DateTimeField(null=True, blank=True)
+    is_locked = models.BooleanField(
+        default=False,
+        help_text="Locked rounds are complete and display-only unless unlocked for editing"
+    )
     dealer = models.ForeignKey(
         SessionPlayer,
         on_delete=models.SET_NULL,

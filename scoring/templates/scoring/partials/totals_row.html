@@ -4,14 +4,18 @@
     <td class="px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">
         Total
     </td>
+    {% if session.game.requires_dealer %}
+    <td class="px-4 py-3"></td>
+    {% endif %}
     {% for sp in participants %}
-        <td class="px-4 py-3 text-center text-sm font-bold
-            {% if best_score is not None and totals|get_item:sp.id == best_score %}
-                text-green-600
-            {% else %}
-                text-gray-800
-            {% endif %}">
-            {{ totals|get_item:sp.id|default:"0" }}
-        </td>
+    <td class="px-4 py-3 text-center text-sm font-bold
+        {% if best_score is not None and totals|get_item:sp.id == best_score %}
+            text-green-600
+        {% else %}
+            text-gray-800
+        {% endif %}">
+        {{ totals|get_item:sp.id|default:"0" }}
+    </td>
     {% endfor %}
+    <td class="px-4 py-3"></td>
 </tr>

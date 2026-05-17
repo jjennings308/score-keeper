@@ -177,8 +177,16 @@ class PlayerStatsView(View):
                 for e in entries
             ]
             avg_total = round(sum(session_totals) / len(session_totals), 1) if session_totals else 0
-            best_total = max(session_totals) if session_totals else None
-            worst_total = min(session_totals) if session_totals else None
+            if session_totals:
+                if any(e.session.game.scoring_mode == Game.ScoringMode.LOWEST for e in entries):
+                    best_total = min(session_totals)
+                    worst_total = max(session_totals)
+                else:
+                    best_total = max(session_totals)
+                    worst_total = min(session_totals)
+            else:
+                best_total = None
+                worst_total = None
 
             # Favourite game
             game_counts = {}

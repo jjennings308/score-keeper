@@ -1,0 +1,27 @@
+{% load dict_extras %}
+<script>
+(function() {
+    // Update complete round button state
+    const activeRoundComplete = {{ active_round_complete|yesno:"true,false" }};
+    {% if active_round %}
+    const btn = document.getElementById('complete-round-btn-{{ active_round.pk }}');
+    if (btn) {
+        if (activeRoundComplete) {
+            btn.classList.remove('text-gray-200', 'cursor-not-allowed', 'pointer-events-none');
+            btn.classList.add('text-green-500', 'hover:text-green-700', 'cursor-pointer');
+            btn.disabled = false;
+        } else {
+            btn.classList.add('text-gray-200', 'cursor-not-allowed', 'pointer-events-none');
+            btn.classList.remove('text-green-500', 'hover:text-green-700', 'cursor-pointer');
+            btn.disabled = true;
+        }
+    }
+    {% endif %}
+
+    // Update totals row
+    const totalsRow = document.getElementById('totals-row');
+    if (totalsRow) {
+        totalsRow.outerHTML = `{% include "scoring/partials/totals_row.html" %}`;
+    }
+})();
+</script>
