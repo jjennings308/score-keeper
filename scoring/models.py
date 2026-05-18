@@ -107,6 +107,11 @@ class Session(models.Model):
         return None
     
 
+    @property
+    def duration(self):
+        end = self.ended_at or timezone.now()
+        return end - self.started_at
+
     def __str__(self):
         return f"{self.game.name} — {self.started_at.strftime('%Y-%m-%d %H:%M')}"
 

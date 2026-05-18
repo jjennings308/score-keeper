@@ -72,6 +72,16 @@ class GameStatsView(View):
                 low=Min('points'),
             )
 
+            duration_seconds = [
+                (s.ended_at - s.started_at).total_seconds()
+                for s in sessions
+                if s.ended_at
+            ]
+            avg_duration = (
+                timedelta(seconds=sum(duration_seconds) / len(duration_seconds))
+                if duration_seconds else None
+            )
+
             game_stats.append({
                 'game': game,
                 'total_sessions': total_sessions,
@@ -80,6 +90,7 @@ class GameStatsView(View):
                 'avg_score': round(score_agg['avg'], 1) if score_agg['avg'] else None,
                 'high_score': score_agg['high'],
                 'low_score': score_agg['low'],
+                'avg_duration': avg_duration,
             })
 
         return render(request, self.template_name, {

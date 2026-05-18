@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load dict_extras %}
 
 {% block title %}{{ session.game.name }} — ScoreKeeper{% endblock %}
 
@@ -15,6 +16,7 @@
             Started {{ session.started_at|date:"M j, Y g:i A" }}
             · {{ session.participants.count }} players
             {% if session.game.num_rounds %}· {{ session.rounds.count }}/{{ session.game.num_rounds }} rounds{% endif %}
+            · {{ session.duration|format_duration }}{% if not session.is_complete %} so far{% endif %}
         </p>
     </div>
 

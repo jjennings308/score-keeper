@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load dict_extras %}
 
 {% block title %}Game Stats — ScoreKeeper{% endblock %}
 
@@ -46,6 +47,7 @@
                 <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Game</th>
                 <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Sessions</th>
                 <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Top Winner</th>
+                <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Avg Duration</th>
                 <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Avg Score</th>
                 <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">High Score</th>
                 <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Low Score</th>
@@ -72,6 +74,9 @@
                     {% else %}
                     <span class="text-gray-400 text-sm">—</span>
                     {% endif %}
+                </td>
+                <td class="px-6 py-4 text-center text-sm text-gray-700">
+                    {{ stat.avg_duration|format_duration }}
                 </td>
                 <td class="px-6 py-4 text-center text-sm text-gray-700">
                     {{ stat.avg_score|default:"—" }}
