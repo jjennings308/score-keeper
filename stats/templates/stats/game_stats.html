@@ -49,8 +49,8 @@
                 <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Top Winner</th>
                 <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Avg Duration</th>
                 <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Avg Score</th>
-                <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">High Score</th>
-                <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Low Score</th>
+                <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Best Score</th>
+                <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Worst Score</th>
                 <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider"></th>
             </tr>
         </thead>
@@ -82,10 +82,10 @@
                     {{ stat.avg_score|default:"—" }}
                 </td>
                 <td class="px-6 py-4 text-center text-sm text-gray-700">
-                    {{ stat.high_score|default:"—" }}
+                    {{ stat.best_score|default:"—" }}
                 </td>
                 <td class="px-6 py-4 text-center text-sm text-gray-700">
-                    {{ stat.low_score|default:"—" }}
+                    {{ stat.worst_score|default:"—" }}
                 </td>
                 <td class="px-6 py-4 text-right">
                     <a href="{% url 'stats:game_detail' stat.game.pk %}{% if days %}?days={{ days }}{% endif %}"

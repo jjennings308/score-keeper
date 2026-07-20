@@ -50,12 +50,12 @@
         <p class="text-xs text-gray-400 mt-1">Avg Round Score</p>
     </div>
     <div class="bg-white rounded-xl border border-gray-200 p-4 text-center">
-        <p class="text-2xl font-bold text-green-600">{{ score_agg.high|default:"—" }}</p>
-        <p class="text-xs text-gray-400 mt-1">High Round Score</p>
+        <p class="text-2xl font-bold text-green-600">{{ best_score|default:"—" }}</p>
+        <p class="text-xs text-gray-400 mt-1">Best Round Score</p>
     </div>
     <div class="bg-white rounded-xl border border-gray-200 p-4 text-center">
-        <p class="text-2xl font-bold text-red-500">{{ score_agg.low|default:"—" }}</p>
-        <p class="text-xs text-gray-400 mt-1">Low Round Score</p>
+        <p class="text-2xl font-bold text-red-500">{{ worst_score|default:"—" }}</p>
+        <p class="text-xs text-gray-400 mt-1">Worst Round Score</p>
     </div>
 </div>
 

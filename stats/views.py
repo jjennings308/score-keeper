@@ -82,14 +82,15 @@ class GameStatsView(View):
                 if duration_seconds else None
             )
 
+            is_lowest = game.scoring_mode == Game.ScoringMode.LOWEST
             game_stats.append({
                 'game': game,
                 'total_sessions': total_sessions,
                 'top_winner': top_winner,
                 'top_winner_wins': top_winner_wins,
                 'avg_score': round(score_agg['avg'], 1) if score_agg['avg'] else None,
-                'high_score': score_agg['high'],
-                'low_score': score_agg['low'],
+                'best_score': score_agg['low'] if is_lowest else score_agg['high'],
+                'worst_score': score_agg['high'] if is_lowest else score_agg['low'],
                 'avg_duration': avg_duration,
             })
 
@@ -142,11 +143,14 @@ class GameStatsDetailView(View):
                 'totals': totals,
             })
 
+        is_lowest = game.scoring_mode == Game.ScoringMode.LOWEST
         return render(request, self.template_name, {
             'game': game,
             'total_sessions': total_sessions,
             'winners_ranked': winners_ranked,
             'score_agg': score_agg,
+            'best_score': score_agg['low'] if is_lowest else score_agg['high'],
+            'worst_score': score_agg['high'] if is_lowest else score_agg['low'],
             'session_history': session_history,
             'days': days,
         })
@@ -183,18 +187,24 @@ class PlayerStatsView(View):
             win_pct = round((wins / total_sessions) * 100, 1) if total_sessions else 0
 
             # Average total score per session
-            session_totals = [
-                e.scores.aggregate(t=Sum('points'))['t'] or 0
+            entry_totals = [
+                (e, e.scores.aggregate(t=Sum('points'))['t'] or 0)
                 for e in entries
             ]
+            session_totals = [t for _, t in entry_totals]
             avg_total = round(sum(session_totals) / len(session_totals), 1) if session_totals else 0
-            if session_totals:
-                if any(e.session.game.scoring_mode == Game.ScoringMode.LOWEST for e in entries):
-                    best_total = min(session_totals)
-                    worst_total = max(session_totals)
-                else:
-                    best_total = max(session_totals)
-                    worst_total = min(session_totals)
+
+            lowest_totals = [t for e, t in entry_totals if e.session.game.scoring_mode == Game.ScoringMode.LOWEST]
+            other_totals = [t for e, t in entry_totals if e.session.game.scoring_mode != Game.ScoringMode.LOWEST]
+            if lowest_totals and not other_totals:
+                best_total = min(lowest_totals)
+                worst_total = max(lowest_totals)
+            elif other_totals and not lowest_totals:
+                best_total = max(other_totals)
+                worst_total = min(other_totals)
+            elif lowest_totals and other_totals:
+                best_total = min(lowest_totals)
+                worst_total = None
             else:
                 best_total = None
                 worst_total = None
@@ -255,22 +265,24 @@ class PlayerStatsDetailView(View):
             total = e.scores.aggregate(t=Sum('points'))['t'] or 0
             won = player_won(e.session, e)
             if gname not in game_breakdown:
-                game_breakdown[gname] = {'sessions': 0, 'wins': 0, 'totals': []}
+                game_breakdown[gname] = {'sessions': 0, 'wins': 0, 'totals': [], 'game': e.session.game}
             game_breakdown[gname]['sessions'] += 1
             game_breakdown[gname]['wins'] += 1 if won else 0
             game_breakdown[gname]['totals'].append(total)
 
         game_breakdown_list = []
         for gname, data in game_breakdown.items():
+            is_lowest = data['game'].scoring_mode == Game.ScoringMode.LOWEST
             avg = round(sum(data['totals']) / len(data['totals']), 1) if data['totals'] else 0
             win_p = round((data['wins'] / data['sessions']) * 100, 1) if data['sessions'] else 0
+            best = min(data['totals']) if is_lowest else max(data['totals']) if data['totals'] else None
             game_breakdown_list.append({
                 'game': gname,
                 'sessions': data['sessions'],
                 'wins': data['wins'],
                 'win_pct': win_p,
                 'avg_score': avg,
-                'best': max(data['totals']) if data['totals'] else None,
+                'best': best,
             })
         game_breakdown_list.sort(key=lambda x: x['sessions'], reverse=True)
 
