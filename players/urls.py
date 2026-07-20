@@ -17,6 +17,11 @@ urlpatterns = [
     path('<int:pk>/invite/', views.player_send_invite, name='send_invite'),
     path('claim/<str:token>/', views.player_claim, name='claim'),
 
+    # Team management
+    path('teams/', views.team_list, name='team_list'),
+    path('teams/create/', views.team_create, name='team_create'),
+    path('teams/<int:pk>/edit/', views.team_update, name='team_update'),
+
     # Group management
     path('groups/', views.group_list, name='group_list'),
     path('groups/create/', views.group_create, name='group_create'),

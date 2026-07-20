@@ -6,7 +6,8 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.conf import settings
 
-from .models import ClaimToken, GroupMembership, Player, PlayerGroup
+from .forms import TeamForm
+from .models import ClaimToken, GroupMembership, Player, PlayerGroup, Team
 
 
 # ---------------------------------------------------------------------------
@@ -334,6 +335,51 @@ def player_update(request, pk):
         return redirect('players:detail', pk=pk)
 
     return render(request, 'players/player_update.html', {'player': player})
+
+# ---------------------------------------------------------------------------
+# Team management
+# ---------------------------------------------------------------------------
+
+@login_required
+def team_list(request):
+    teams = Team.objects.prefetch_related('players').order_by('name')
+    return render(request, 'players/team_list.html', {'teams': teams})
+
+
+@login_required
+def team_create(request):
+    if request.method == 'POST':
+        form = TeamForm(request.POST)
+        if form.is_valid():
+            team = form.save()
+            messages.success(request, f"Team '{team.name}' created.")
+            return redirect('players:team_list')
+    else:
+        form = TeamForm()
+    return render(request, 'players/team_form.html', {
+        'form': form,
+        'title': 'Create Team',
+        'button_label': 'Create Team',
+    })
+
+
+@login_required
+def team_update(request, pk):
+    team = get_object_or_404(Team, pk=pk)
+    if request.method == 'POST':
+        form = TeamForm(request.POST, instance=team)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Team '{team.name}' updated.")
+            return redirect('players:team_list')
+    else:
+        form = TeamForm(instance=team)
+    return render(request, 'players/team_form.html', {
+        'form': form,
+        'title': 'Edit Team',
+        'button_label': 'Save Changes',
+    })
+
 
 # ---------------------------------------------------------------------------
 # Helpers
