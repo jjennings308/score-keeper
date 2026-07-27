@@ -1,3 +1,3 @@
 from django.contrib import admin
 
-# Register your models here.
+# Session admin is registered in games/admin.py alongside related models.

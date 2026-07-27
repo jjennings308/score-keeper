@@ -23,19 +23,20 @@ class SessionAdmin(admin.ModelAdmin):
     list_display = [
         'id',
         'game',
+        'group',
         'participant_count',
         'round_count',
         'is_complete',
         'winner',
         'started_at',
     ]
-    list_filter = ['is_complete', 'game']
+    list_filter = ['is_complete', 'game', 'group']
     search_fields = ['game__name', 'winner']
     readonly_fields = ['started_at', 'created_by']
     inlines = [SessionPlayerInline, RoundInline]
     fieldsets = (
         (None, {
-            'fields': ('game', 'is_complete', 'winner')
+            'fields': ('game', 'group', 'is_complete', 'winner')
         }),
         ('Timestamps', {
             'fields': ('started_at', 'ended_at', 'created_by'),
