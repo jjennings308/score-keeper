@@ -16,9 +16,25 @@
                 {% endif %}
             </div>
             <div class="flex gap-2">
+                {% if available_players %}
+                <form method="post" action="{% url 'players:group_add_player' pk=group.pk %}" class="flex gap-2">
+                    {% csrf_token %}
+                    <select name="player_id"
+                            class="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                        <option value="">Add existing player…</option>
+                        {% for player in available_players %}
+                        <option value="{{ player.pk }}">{{ player.display_name }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit"
+                            class="bg-white border border-gray-300 hover:border-gray-400 text-gray-700 text-sm font-medium px-4 py-2 rounded-lg transition-colors duration-150">
+                        Add
+                    </button>
+                </form>
+                {% endif %}
                 <a href="{% url 'players:create' %}?group_id={{ group.pk }}"
                    class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors duration-150">
-                    + Add Player
+                    + New Player
                 </a>
                 <a href="{% url 'players:group_update' pk=group.pk %}"
                    class="border border-gray-300 hover:border-gray-400 text-gray-600 text-sm font-medium px-3 py-2 rounded-lg transition-colors duration-150">
@@ -96,7 +112,7 @@
         <p class="text-gray-400 text-sm mb-6">Add your first player to get started.</p>
         <a href="{% url 'players:create' %}?group_id={{ group.pk }}"
            class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors duration-150">
-            + Add Player
+            + New Player
         </a>
     </div>
     {% endif %}

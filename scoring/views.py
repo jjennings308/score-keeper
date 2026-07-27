@@ -8,7 +8,7 @@ from django.db.models import Sum
 from django.template.loader import render_to_string
 
 from games.models import Game
-from players.models import Player, Team
+from players.models import Player, PlayerGroup, Team
 from .models import Session, SessionPlayer, Round, Score
 
 
@@ -141,15 +141,26 @@ class SessionPlayersView(LoginRequiredMixin, View):
 
     def get(self, request, game_id):
         game = get_object_or_404(Game, pk=game_id)
+        groups = PlayerGroup.objects.prefetch_related(
+            'memberships__player'
+        ).order_by('name')
         return render(request, self.template_name, {
             'game': game,
             'players': Player.objects.order_by('name'),
             'teams': Team.objects.prefetch_related('players').order_by('name'),
+            'groups': groups,
         })
 
     def post(self, request, game_id):
         game = get_object_or_404(Game, pk=game_id)
-        session = Session.objects.create(game=game, created_by=request.user)
+        group_id = request.POST.get('group_id')
+        group = None
+        if group_id:
+            try:
+                group = PlayerGroup.objects.get(pk=group_id)
+            except PlayerGroup.DoesNotExist:
+                pass
+        session = Session.objects.create(game=game, created_by=request.user, group=group)
 
         if game.play_mode == Game.PlayMode.TEAM:
             team_ids = request.POST.getlist('teams')

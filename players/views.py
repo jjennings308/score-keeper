@@ -261,10 +261,28 @@ def group_create(request):
 def group_detail(request, pk):
     group = get_object_or_404(PlayerGroup, pk=pk, owner=request.user)
     memberships = group.memberships.select_related('player').all()
+    existing_ids = memberships.values_list('player_id', flat=True)
+    available_players = Player.objects.exclude(pk__in=existing_ids).order_by('name')
     return render(request, 'players/group_detail.html', {
         'group': group,
         'memberships': memberships,
+        'available_players': available_players,
     })
+
+
+@login_required
+def group_add_player(request, pk):
+    group = get_object_or_404(PlayerGroup, pk=pk, owner=request.user)
+    if request.method == 'POST':
+        player_id = request.POST.get('player_id')
+        if player_id:
+            player = get_object_or_404(Player, pk=player_id)
+            _, created = GroupMembership.objects.get_or_create(group=group, player=player)
+            if created:
+                messages.success(request, f"{player.display_name} added to {group.name}.")
+            else:
+                messages.info(request, f"{player.display_name} is already in {group.name}.")
+    return redirect('players:group_detail', pk=pk)
 
 
 @login_required

@@ -5,7 +5,7 @@ from django.utils import timezone
 from datetime import timedelta
 
 from games.models import Game
-from players.models import Player
+from players.models import Player, PlayerGroup
 from scoring.models import Session, SessionPlayer, Score
 
 def player_won(session, session_player):
@@ -23,14 +23,22 @@ def player_won(session, session_player):
     return False
 
 def get_date_filter(request):
-    """Parse date range from request GET params. Returns a Q filter or None."""
     days = request.GET.get('days')
     if days:
         try:
             days = int(days)
-            cutoff = timezone.now() - timedelta(days=days)
-            return cutoff
+            return timezone.now() - timedelta(days=days)
         except ValueError:
+            pass
+    return None
+
+
+def get_group_filter(request):
+    group_id = request.GET.get('group')
+    if group_id:
+        try:
+            return PlayerGroup.objects.get(pk=group_id)
+        except PlayerGroup.DoesNotExist:
             pass
     return None
 
@@ -40,7 +48,9 @@ class GameStatsView(View):
 
     def get(self, request):
         cutoff = get_date_filter(request)
+        group = get_group_filter(request)
         days = request.GET.get('days', '')
+        groups = PlayerGroup.objects.order_by('name')
 
         games = Game.objects.all().order_by('name')
         game_stats = []
@@ -49,6 +59,8 @@ class GameStatsView(View):
             sessions = game.sessions.filter(is_complete=True)
             if cutoff:
                 sessions = sessions.filter(started_at__gte=cutoff)
+            if group:
+                sessions = sessions.filter(group=group)
 
             total_sessions = sessions.count()
             if total_sessions == 0:
@@ -97,6 +109,8 @@ class GameStatsView(View):
         return render(request, self.template_name, {
             'game_stats': game_stats,
             'days': days,
+            'groups': groups,
+            'selected_group': group,
         })
 
 
@@ -106,11 +120,15 @@ class GameStatsDetailView(View):
     def get(self, request, pk):
         game = get_object_or_404(Game, pk=pk)
         cutoff = get_date_filter(request)
+        group = get_group_filter(request)
         days = request.GET.get('days', '')
+        groups = PlayerGroup.objects.order_by('name')
 
         sessions = game.sessions.filter(is_complete=True).order_by('-started_at')
         if cutoff:
             sessions = sessions.filter(started_at__gte=cutoff)
+        if group:
+            sessions = sessions.filter(group=group)
 
         total_sessions = sessions.count()
 
@@ -153,6 +171,8 @@ class GameStatsDetailView(View):
             'worst_score': score_agg['high'] if is_lowest else score_agg['low'],
             'session_history': session_history,
             'days': days,
+            'groups': groups,
+            'selected_group': group,
         })
 
 
@@ -161,7 +181,9 @@ class PlayerStatsView(View):
 
     def get(self, request):
         cutoff = get_date_filter(request)
+        group = get_group_filter(request)
         days = request.GET.get('days', '')
+        groups = PlayerGroup.objects.order_by('name')
 
         players = Player.objects.all().order_by('name')
         player_stats = []
@@ -174,6 +196,8 @@ class PlayerStatsView(View):
 
             if cutoff:
                 entries = entries.filter(session__started_at__gte=cutoff)
+            if group:
+                entries = entries.filter(session__group=group)
             entries = list(entries)
             total_sessions = len(entries)
 
@@ -233,6 +257,8 @@ class PlayerStatsView(View):
         return render(request, self.template_name, {
             'player_stats': player_stats,
             'days': days,
+            'groups': groups,
+            'selected_group': group,
         })
 
 
@@ -242,15 +268,19 @@ class PlayerStatsDetailView(View):
     def get(self, request, pk):
         player = get_object_or_404(Player, pk=pk)
         cutoff = get_date_filter(request)
+        group = get_group_filter(request)
         days = request.GET.get('days', '')
+        groups = PlayerGroup.objects.order_by('name')
 
         entries = SessionPlayer.objects.filter(
             player=player,
             session__is_complete=True,
         ).select_related('session__game', 'player', 'team').order_by('-session__started_at')
-        
+
         if cutoff:
             entries = entries.filter(session__started_at__gte=cutoff)
+        if group:
+            entries = entries.filter(session__group=group)
         entries = list(entries)
         
         total_sessions = len(entries)
@@ -304,4 +334,6 @@ class PlayerStatsDetailView(View):
             'game_breakdown': game_breakdown_list,
             'recent': recent,
             'days': days,
+            'groups': groups,
+            'selected_group': group,
         })

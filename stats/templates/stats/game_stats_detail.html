@@ -19,25 +19,40 @@
 </div>
 
 <!-- Date Filter -->
-<div class="flex flex-wrap gap-2 mb-6">
-    <span class="text-sm text-gray-500 self-center">Filter:</span>
-    <a href="{% url 'stats:game_detail' game.pk %}"
+<div class="flex flex-wrap gap-2 mb-3">
+    <span class="text-sm text-gray-500 self-center">Period:</span>
+    <a href="?{% if selected_group %}group={{ selected_group.pk }}{% endif %}"
        class="px-3 py-1 rounded-full text-xs font-medium {% if not days %}bg-indigo-100 text-indigo-700{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %}">
         All time
     </a>
-    <a href="?days=30"
+    <a href="?days=30{% if selected_group %}&group={{ selected_group.pk }}{% endif %}"
        class="px-3 py-1 rounded-full text-xs font-medium {% if days == '30' %}bg-indigo-100 text-indigo-700{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %}">
         Last 30 days
     </a>
-    <a href="?days=90"
+    <a href="?days=90{% if selected_group %}&group={{ selected_group.pk }}{% endif %}"
        class="px-3 py-1 rounded-full text-xs font-medium {% if days == '90' %}bg-indigo-100 text-indigo-700{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %}">
         Last 90 days
     </a>
-    <a href="?days=365"
+    <a href="?days=365{% if selected_group %}&group={{ selected_group.pk }}{% endif %}"
        class="px-3 py-1 rounded-full text-xs font-medium {% if days == '365' %}bg-indigo-100 text-indigo-700{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %}">
         Last year
     </a>
 </div>
+{% if groups %}
+<div class="flex flex-wrap gap-2 mb-6">
+    <span class="text-sm text-gray-500 self-center">Group:</span>
+    <a href="?{% if days %}days={{ days }}{% endif %}"
+       class="px-3 py-1 rounded-full text-xs font-medium {% if not selected_group %}bg-indigo-100 text-indigo-700{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %}">
+        All
+    </a>
+    {% for group in groups %}
+    <a href="?group={{ group.pk }}{% if days %}&days={{ days }}{% endif %}"
+       class="px-3 py-1 rounded-full text-xs font-medium {% if selected_group.pk == group.pk %}bg-indigo-100 text-indigo-700{% else %}bg-gray-100 text-gray-600 hover:bg-gray-200{% endif %}">
+        {{ group.name }}
+    </a>
+    {% endfor %}
+</div>
+{% endif %}
 
 <!-- Summary Cards -->
 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
